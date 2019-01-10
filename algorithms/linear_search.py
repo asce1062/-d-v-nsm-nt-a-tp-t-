@@ -10,11 +10,7 @@ until we either find what we are looking for or until we run out of elements
 def linear_search(elements, search):
     for i in range(0, len(elements)):  # repeat for each item in list
         if search == elements[i]:  # if item at position i is search time
-            print (str(search), " Found in position ", str(i))  # report find
-            break  # stop when found
-        else:
-            print ("Element not Found! Please try again!")
-
+            return (str(search) + " Found in position " + str(i))  # report find
 
 elements = [4, 1, 2, 5, 3]  # set up array
-print(linear_search(elements, 2))
+print(linear_search(elements, 5))
