@@ -7,6 +7,7 @@ from flask import jsonify, request
 from functools import wraps
 from models import User
 
+
 def response_builder(data, status_code=200):
     """Build the jsonified response to return."""
     response = jsonify(data)
@@ -31,17 +32,17 @@ def identity(payload):
             return response_builder({
                 "message": "Username and password are incorrect.",
                 "status": "fail"
-                }, 400)
+            }, 400)
     else:
         password = bcrypt.hashpw(payload.get('password').encode('utf-8'),
                                  bcrypt.gensalt())
         return payload.get('username'), password, False
 
+
 def decode_auth_token(auth_token):
     """Decodes the auth token."""
     payload = jwt.decode(auth_token, os.environ['SECRET'])
     return payload['sub']
-
 
 
 def token_required(f):
@@ -52,7 +53,7 @@ def token_required(f):
         if not authorization_token:
             return response_builder({
                 "message": "Bad request. Header does not contain authorization token"
-                }, 400)
+            }, 400)
 
         try:
             payload = decode_auth_token(authorization_token)

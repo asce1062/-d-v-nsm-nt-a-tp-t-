@@ -13,7 +13,8 @@ class Movie_User_Link_Table(db.Model):
 
     __tablename__ = "movie_user_link"
 
-    id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
+    id = db.Column(db.Integer, autoincrement=True,
+                   primary_key=True, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     movie_id = db.Column(db.Integer, db.ForeignKey("movie.id"))
 
@@ -23,7 +24,8 @@ class Movie_User_Link_Table(db.Model):
 
 class Movie(db.Model):
     """Store the Movie details."""
-    id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
+    id = db.Column(db.Integer, autoincrement=True,
+                   primary_key=True, nullable=False)
     name = db.Column(db.String(80), nullable=False)
     description = db.Column(db.String(120), nullable=False)
     watching = db.Column(db.Boolean, default=False)
@@ -32,12 +34,14 @@ class Movie(db.Model):
 
 class User(db.Model):
     """Store User details."""
-    id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
+    id = db.Column(db.Integer, autoincrement=True,
+                   primary_key=True, nullable=False)
     name = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(80), nullable=False)
 
     movies = db.relationship("Movie",
-                            secondary="movie_user_link", lazy="dynamic")
+                             secondary="movie_user_link", lazy="dynamic")
+
 
 # Create the database tables.
 db.create_all()
