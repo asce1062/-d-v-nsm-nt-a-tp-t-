@@ -105,3 +105,12 @@ venv.bak/
 
 .vscode/
 ./
+/__pycache__
+.DS_Store
+.env
+#databases #
+######################
+*.sql
+*.sqlite
+*.db
+*.sqlite3
