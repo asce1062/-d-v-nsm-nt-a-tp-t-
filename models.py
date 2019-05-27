@@ -28,7 +28,6 @@ class Movie(db.Model):
                    primary_key=True, nullable=False)
     name = db.Column(db.String(80), nullable=False)
     description = db.Column(db.String(120), nullable=False)
-    watching = db.Column(db.Boolean, default=False)
     completed = db.Column(db.Boolean, default=False)
 
 
