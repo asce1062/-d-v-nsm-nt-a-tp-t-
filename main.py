@@ -123,3 +123,56 @@ def add_movie():
             "message": "Full details have not been provided.",
             "status": "fail"
         }, 400)
+
+
+@token_required
+@app.route("/user/link/movie", methods=["POST"])
+def link_movie_user():
+    """Link movie to user watching it."""
+    payload = request.get_json(silent=True)
+
+    if not payload:
+        return response_builder({
+            "message": "Full details have not been provided.",
+            "status": "fail"
+        }, 400)
+
+    if payload.get('name'):
+        movie = Movie.query.filter_by(name=payload.get("name")).first()
+
+        if not movie:
+            return response_builder({
+                "message": "Movie doesn't exist. Please add it.",
+                "status": "fail"
+            }, 403)
+
+        user_id = decode_auth_token(request.headers.get('Authorization'))
+        user = User.query.filter_by(id=user_id).first()
+
+        linked_movies = Movie_User_Link_Table.query.filter_by(
+            movie_id=movie.id).all()
+        for movie in linked_movies:
+            if movie.user_id == user.id:
+                return response_builder({
+                    "message": "Movie has already been linked to user.",
+                    "status": "fail"
+                }, 403)
+
+        movie_user_link = Movie_User_Link_Table(
+            movie_id=movie.id,
+            user_id=user.id
+        )
+        user.movies.append(movie)
+        db.session.add(movie_user_link)
+        db.session.commit()
+        return response_builder({
+            "message": "Link of {} to User {} successful.".format(movie.name,
+                                                                  user.name),
+            "status": "success"
+        })
+
+    else:
+        return response_builder({
+            "message": "Movie name must be provided.",
+            "status": "fail"
+        }, 403)
