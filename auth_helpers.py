@@ -49,7 +49,7 @@ def token_required(f):
     """Authenticate that a valid Token is present."""
     @wraps(f)
     def decorated(*args, **kwargs):
-        authorization_token = request.headers.get('Authorisation')
+        authorization_token = request.headers.get('Authorization')
         if not authorization_token:
             return response_builder({
                 "message": "Bad request. Header does not contain authorization token"

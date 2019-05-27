@@ -73,15 +73,53 @@ def login():
                 "message": "Login successful.",
                 "status": "success",
                 "token": str(token)
-                }, 200)
+            }, 200)
         except Exception as e:
             return response_builder({
                 "message": "Username and password are incorrect.",
                 "status": "fail",
                 "error": str(e)
-                }, 400)
+            }, 400)
     else:
         return response_builder({
             "message": "Username and password are incorrect.",
             "status": "fail"
-            }, 400)
+        }, 400)
+
+
+@app.route("/movie/add", methods=["POST"])
+@token_required
+def add_movie():
+    """Add movie to system."""
+    payload = request.get_json(silent=True)
+
+    if not payload:
+        return response_builder({
+            "message": "Full details have not been provided.",
+            "status": "fail"
+        }, 400)
+
+    if payload.get('name') and payload.get('description'):
+        movie = Movie.query.filter_by(name=payload.get("name")).first()
+
+        if movie:
+            return response_builder({
+                "message": "Movie already exists.",
+                "status": "fail"
+            }, 403)
+        else:
+            new_movie = Movie(
+                name=payload.get('name'),
+                description=payload.get('description')
+            )
+            db.session.add(new_movie)
+            db.session.commit()
+            return response_builder({
+                "message": "Movie addition successful.",
+                "status": "success"
+            })
+    else:
+        return response_builder({
+            "message": "Full details have not been provided.",
+            "status": "fail"
+        }, 400)
