@@ -262,3 +262,71 @@ def update_completed_movies():
             "message": "Name of completed movie must be provided.",
             "status": "fail"
         }, 403)
+
+
+@token_required
+@app.route("/user/movies/delete", methods=["DELETE"])
+def delete_completed_movies():
+    """delete movies linked to a user."""
+    payload = request.get_json(silent=True)
+
+    if not payload:
+        return response_builder({
+            "message": "Full details have not been provided.",
+            "status": "fail"
+        }, 400)
+
+    if payload.get("name"):
+        movie = Movie.query.filter_by(name=payload.get("name")).first()
+
+        if not movie:
+            return response_builder({
+                "message": "Movie doesn't exist or is already deleted",
+                "status": "fail"
+            }, 403)
+
+        user_id = decode_auth_token(request.headers.get('Authorization'))
+        user = User.query.filter_by(id=user_id).first()
+
+        linked_movies = Movie_User_Link_Table.query.filter_by(
+            movie_id=movie.id).all()
+        for delete_movie in linked_movies:
+            if delete_movie.user_id == user.id:
+                movie_to_delete = Movie.query.filter_by(
+                    name=payload.get("name")).first()
+                db.session.delete(movie_to_delete)
+                db.session.commit()
+
+        return response_builder({
+            "message": "Movie {} has been marked as deleted.".format(payload.get("name")),
+            "status": "success"
+        }, 200)
+
+    else:
+        return response_builder({
+            "message": "Name of a movie must be provided.",
+            "status": "fail"
+        }, 403)
+
+
+@app.route("/movies", methods=["GET"])
+def view_movies():
+    movies = Movie.query.all()
+    list_movies = []
+
+    if not movies:
+        return response_builder({
+            "movies": list_movies,
+            "message": "No movies in the system currently.",
+            "status": "success"
+        }, 200)
+
+    for movie in movies:
+        list_movies.append({
+            "movie_name": movie.name,
+            "movie_description": movie.description
+        })
+    return response_builder({
+        "movies": list_movies,
+        "status": "success"
+    }, 200)
