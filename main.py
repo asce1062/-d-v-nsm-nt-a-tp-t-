@@ -176,3 +176,38 @@ def link_movie_user():
             "message": "Movie name must be provided.",
             "status": "fail"
         }, 403)
+
+
+@token_required
+@app.route("/user/movies", methods=["GET"])
+def view_linked_movies():
+    """View movies linked to logged in user."""
+    payload = request.get_json(silent=True)
+
+    user_id = decode_auth_token(request.headers.get('Authorization'))
+    user = User.query.filter_by(id=user_id).first()
+
+    if len([q for q in user.movies]) == 0:
+        return response_builder({
+            "message": "User has no movies linked",
+            "status": "success"
+        }, 200)
+
+    list_movies = []
+    watched_movies = []
+    for movie in user.movies:
+        list_movies.append({
+            "movie_name": movie.name,
+            "movie_description": movie.description
+        })
+        if movie.completed:
+            watched_movies.append({
+                "movie_name": movie.name,
+                "movie_description": movie.description
+            })
+
+    return response_builder({
+        "movies": list_movies,
+        "watched_movies": watched_movies,
+        "status": "success"
+    }, 200)
