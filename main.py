@@ -2,9 +2,18 @@ import jwt
 import os
 import datetime
 from flask import request
+from flask_restful import fields, marshal, reqparse
 from models import app, User, Movie, Movie_User_Link_Table, db
 from auth_helpers import (response_builder, identity, decode_auth_token,
                           token_required)
+
+
+movie_fields = {
+    'id': fields.Integer,
+    'name': fields.String,
+    'description': fields.String,
+    'completed': fields.Boolean
+}
 
 
 @app.route("/")
@@ -311,22 +320,91 @@ def delete_completed_movies():
 
 @app.route("/movies", methods=["GET"])
 def view_movies():
-    movies = Movie.query.all()
-    list_movies = []
+    requestparse = reqparse.RequestParser()
+    requestparse.add_argument(
+        'q',
+        type=str,
+        location='args'
+    )
+    requestparse.add_argument(
+        'limit',
+        type=int,
+        location='args',
+        default=20
+    )
+    requestparse.add_argument(
+        'page',
+        type=int,
+        location='args',
+        default=1
+    )
 
-    if not movies:
-        return response_builder({
-            "movies": list_movies,
-            "message": "No movies in the system currently.",
-            "status": "success"
-        }, 200)
+    args = requestparse.parse_args()
+    query = args['q']
+    limit = args['limit']
+    page = args['page']
 
-    for movie in movies:
-        list_movies.append({
-            "movie_name": movie.name,
-            "movie_description": movie.description
-        })
-    return response_builder({
-        "movies": list_movies,
-        "status": "success"
-    }, 200)
+    if query:
+        movies = \
+            Movie.query.filter(
+                Movie.name.ilike(
+                    '%' + query + '%')).paginate(page, limit, False)
+        if not movies.items:
+            return response_builder(
+                {
+                    'message': 'Movie not found.',
+                    'status': 'Success'
+                }, 200)
+        # .has_prev and .has_next are attributes of the Pagination instance.
+        if movies.has_prev:
+            prev_page = request.url_root + 'movies' \
+                + '?q=' + str(query) + '&page=' + \
+                str(page - 1) + '&limit=' + str(limit)
+        else:
+            prev_page = 'None'
+        if movies.has_next:
+            next_page = request.url_root + 'movies' \
+                + '?q=' + str(query) + '&page=' + \
+                str(page + 1) + '&limit=' + str(limit)
+        else:
+            next_page = 'None'
+        return response_builder(
+            {
+                'message':
+                {
+                    'next_page': next_page,
+                    'prev_page': prev_page,
+                    'total_pages': movies.pages
+                },
+                'movies': marshal(
+                    movies.items,
+                    movie_fields
+                )
+            }, 200
+        )
+    else:
+        all_movies = Movie.query.all()
+        list_all_movies = []
+        for movie in all_movies:
+            list_all_movies.append(
+                {
+                    'id': movie.id,
+                    'name': movie.name,
+                    'description': movie.description,
+                    'completed': movie.completed
+                }
+            )
+        return response_builder(
+            {
+                'movies': marshal(
+                    list_all_movies,
+                    movie_fields
+                )
+            }, 200
+        )
+        if not all_movies:
+            return response_builder(
+                {
+                    'message': 'No movies in the system.',
+                    'status': 'Success'
+                }, 200)
